@@ -1,5 +1,5 @@
 
-// praytime.js: Prayer Times Calculator (v3.0.0)
+// praytime.js: Prayer Times Calculator (v3.0.1)
 // Copyright (c) 2007-2025 Hamid Zarrabi-Zadeh
 // License: MIT
 // https://praytime.info/docs
