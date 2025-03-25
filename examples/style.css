@@ -1,0 +1,115 @@
+body,
+tr,
+form {
+    font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    color: #444;
+    text-align: center;
+    margin: 0;
+    padding: 0
+}
+
+pre {
+    font-family: Courier, monospace;
+    font-size: 12px;
+    margin: 0px 8px;
+}
+
+/* Daily */
+
+.title {
+    text-align: center;
+    margin-top: 3em;
+}
+
+.daily {
+    border: 1px outset gray;
+    border-collapse: collapse;
+    min-width: 12em;
+    margin: 0 auto;
+}
+
+.daily td,
+.daily th {
+    border: 1px inset #ccc;
+    border-spacing: 1px;
+    padding: 2px 4px;
+}
+
+.daily td:first-child {
+    text-align: left;
+}
+
+.daily th {
+    color: black;
+    text-align: center;
+    font-weight: bold;
+    background-color: #eee;
+}
+
+
+/* Monthly */
+
+input {
+    font-size: 12px;
+}
+
+.header {
+    background: #eef;
+    border-bottom: 1px solid #ddd;
+    padding: 7px;
+}
+
+.caption {
+    font-size: 20px;
+    color: #d95722;
+    text-align: center;
+    width: 10em;
+}
+
+.arrow {
+    font-weight: bold;
+    text-decoration: none;
+    color: #333;
+}
+
+.arrow:hover {
+    text-decoration: underline;
+}
+
+.command {
+    font-weight: bold;
+    text-decoration: none;
+    color: #aaa;
+}
+
+.command:hover {
+    text-decoration: underline;
+}
+
+.timetable {
+    border: 1px outset gray;
+    border-collapse: collapse;
+    margin: 0 auto;
+}
+
+.timetable td {
+    border: 1px inset #ccc;
+    border-spacing: 1px;
+    padding: 1px 3px;
+}
+
+.head-row {
+    color: black;
+    background-color: #eef;
+}
+
+.today-row {
+    background-color: #eee;
+    color: black
+}
+
+.footer {
+    text-align: center;
+    margin: .7em 0 2em;
+}

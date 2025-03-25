@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Yearly Prayer Timetable</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="style.css">
+	<script src="../src/praytime.js"></script>
+</head>
+
+<body>
+	<div class="header">
+		<form class="form" action="javascript:update();">
+			Latitude: <input type="text" value="43" id="latitude" size="2" onchange="update();">&nbsp;
+			Longitude: <input type="text" value="-80" id="longitude" size="2" onchange="update();">&nbsp;
+			Year: <input type="text" value="2011" id="year" size="4" onchange="update();">&nbsp;
+			Time Zone: <input type="text" value="-5" id="timezone" size="2" onchange="update();">&nbsp;
+			Method:
+			<select id="method" size="1" style="font-size: 12px;" onchange="update()">
+				<option value="MWL">Muslim World League (MWL)</option>
+				<option value="ISNA" selected="selected">Islamic Society of North America (ISNA)</option>
+				<option value="Egypt">Egyptian General Authority of Survey</option>
+				<option value="Makkah">Umm al-Qura University, Makkah</option>
+				<option value="Karachi">University of Islamic Sciences, Karachi</option>
+				<option value="Tehran">Institute of Geophysics, University of Tehran</option>
+				<option value="Jafari">Leva Research Institute, Qum</option>
+			</select>
+		</form>
+	</div>
+	<br />
+
+	<pre>
+Date   Fajr   Sunrise  Dhuhr    Asr   Maghrib  Isha
+-----------------------------------------------------
+</pre>
+
+	<div id="timetable"></div>
+
+	<div class="footer">
+		Powered by: <a class="command" href="https://praytime.info">PrayTime.info</a>
+	</div>
+
+	<script type="text/javascript">
+
+		$('year').value = (new Date()).getFullYear();
+		update();
+
+		function update() {
+			const lat = $('latitude').value;
+			const lng = $('longitude').value;
+			const timezone = $('timezone').value;
+			const method = $('method').value;
+			const year = $('year').value;
+			praytime.method(method).location([lat, lng]).utcOffset(timezone);
+			$('timetable').innerHTML = '<pre>' + makeTable(year) + '</pre>';
+		}
+
+		function makeTable(year) {
+			const date = new Date(+year, 0, 1);
+			const endDate = new Date(+year + 1, 0, 1);
+			const labels = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+			const monthNames = new Array('Jan', 'Feb', 'Mar', 'Apr', 'May',
+				'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
+
+			let table = '';
+			while (date < endDate) {
+				const times = praytime.times();
+				const day = String(date.getDate()).padStart(2, '0');
+				table += `${monthNames[date.getMonth()]} ${day}\t`;
+				table += labels.map(label => times[label.toLowerCase()]).join('\t') + '\n';
+				date.setDate(date.getDate() + 1); // next day
+			}
+			return table;
+		}
+
+		function $(id) {
+			return document.getElementById(id);
+		}
+
+	</script>
+
+</body>
+
+</html>

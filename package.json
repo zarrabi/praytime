@@ -1,0 +1,28 @@
+{
+    "name": "praytime",
+    "version": "3.0.0",
+    "description": "A JavaScript library for calculating prayer times.",
+    "author": "Hamid Zarrabi-Zadeh",
+    "license": "MIT",
+    "homepage": "https://praytime.info",
+    "main": "src/praytime.js",
+    "scripts": {
+        "test": "node tests/test.js"
+    },
+    "keywords": [
+        "praytimes",
+        "prayer",
+        "times",
+        "adhan",
+        "salah",
+        "muslim",
+        "islamic"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/zarrabi/praytime.git"
+    },
+    "bugs": {
+        "url": "https://github.com/zarrabi/praytime/issues"
+    }
+}
