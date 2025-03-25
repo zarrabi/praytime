@@ -3,6 +3,7 @@
 
 <head>
 	<title>Monthly Prayer Timetable</title>
+	<meta name="author" content="Hamid Zarrabi-Zadeh">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="style.css">
 	<script src="../src/praytime.js"></script>
@@ -13,9 +14,9 @@
 		<form class="form" action="javascript:update();">
 			Latitude: <input type="text" value="43" id="latitude" size="4" onchange="update();" />&nbsp;
 			Longitude: <input type="text" value="-80" id="longitude" size="4" onchange="update();" />&nbsp;
-			Timezone: <input type="text" value="-5" id="timezone" size="4" onchange="update();" />&nbsp;
+			Time Zone: <input type="text" value="-5" id="timezone" size="4" onchange="update();" />&nbsp;
 			Method:
-			<select id="method" size="1" style="font-size: 12px;" onchange="update()">
+			<select id="method" onchange="update()">
 				<option value="MWL" selected="selected">Muslim World League (MWL)</option>
 				<option value="ISNA">Islamic Society of North America (ISNA)</option>
 				<option value="Egypt">Egyptian General Authority of Survey</option>
@@ -26,55 +27,54 @@
 			</select>
 		</form>
 	</div>
-	<br />
-	<table style="margin: 0 auto;">
+
+	<table class="caption">
 		<tr>
 			<td><a href="javascript:displayMonth(-1)" class="arrow">&lt;&lt;</a></td>
-			<td id="table-title" class="caption"></td>
+			<td id="table-title"></td>
 			<td><a href="javascript:displayMonth(+1)" class="arrow">&gt;&gt;</a></td>
 		</tr>
 	</table>
 
-	<br />
 	<table id="timetable" class="timetable">
 		<tbody></tbody>
 	</table>
 
 	<div class="footer">
-		Source: <a href="https://praytime.info" class="command">PrayTime.info</a> |
-		Time Format: <a id="time-format" href="javascript:switchFormat(1)" title="Change clock format"
-			class="command"></a>
+		Source: <a href="https://praytime.info">PrayTime.info</a> |
+		Time Format: <a id="time-format" href="javascript:switchFormat()" title="Change clock format"></a>
 	</div>
-	<br />
 
 	<script type="text/javascript">
 
 		const currentDate = new Date();
-		let timeFormat = 1;
-		switchFormat(0);
+		let timeFormat = 0;
+		switchFormat();
 
 		// display monthly timetable
 		function displayMonth(offset) {
 			const lat = $('latitude').value;
 			const lng = $('longitude').value;
-			const timeZone = $('timezone').value;
+			const timezone = $('timezone').value;
 			const method = $('method').value;
+			const format = timeFormat ? '12H' : '24h';
 
-			praytime.method(method);
+			// set prayer times parameters
+			praytime.method(method).location([lat, lng]).utcOffset(timezone).format(format);
+
 			currentDate.setMonth(currentDate.getMonth() + 1 * offset);
 			const month = currentDate.getMonth();
 			const year = currentDate.getFullYear();
-			const title = monthFullName(month) + ' ' + year;
-			$('table-title').innerHTML = title;
-			makeTable(year, month, lat, lng, timeZone);
+			const monthName = currentDate.toLocaleString('en-US', { month: 'long' });
+			$('table-title').innerHTML = monthName + ' ' + year;
+			makeTable(year, month);
 		}
 
 		// make monthly timetable
-		function makeTable(year, month, lat, lng, timezone) {
+		function makeTable(year, month) {
 			const items = {
 				day: 'Day', fajr: 'Fajr', sunrise: 'Sunrise',
-				dhuhr: 'Dhuhr', asr: 'Asr', // sunset: 'Sunset', 
-				maghrib: 'Maghrib', isha: 'Isha'
+				dhuhr: 'Dhuhr', asr: 'Asr', maghrib: 'Maghrib', isha: 'Isha'
 			};
 
 			const tbody = document.createElement('tbody');
@@ -82,25 +82,21 @@
 
 			const date = new Date(year, month, 1);
 			const endDate = new Date(year, month + 1, 1);
-			const format = timeFormat ? '12H' : '24h';
-
-			praytime.location([lat, lng]).utcOffset(timezone).format(format);
 
 			while (date < endDate) {
-				const times = praytime.times(date);
+				const times = praytime.times(date); // get prayer times
 				times.day = date.getDate();
-				const today = new Date();
-				const isToday = (date.getMonth() == today.getMonth()) && (date.getDate() == today.getDate());
-				const klass = isToday ? 'today-row' : '';
-				tbody.appendChild(makeTableRow(times, items, klass));
+				const isToday = date.toDateString() === new Date().toDateString();
+				const cls = isToday ? 'today-row' : '';
+				tbody.appendChild(makeTableRow(times, items, cls));
 				date.setDate(date.getDate() + 1);  // next day
 			}
-			removeAllChild($('timetable'));
+			$('timetable').replaceChildren();
 			$('timetable').appendChild(tbody);
 		}
 
 		// make a table row
-		function makeTableRow(data, items, klass) {
+		function makeTableRow(data, items, cls) {
 			const row = document.createElement('tr');
 			for (let i in items) {
 				const cell = document.createElement('td');
@@ -108,23 +104,14 @@
 				cell.style.width = i == 'day' ? '2.5em' : '3.7em';
 				row.appendChild(cell);
 			}
-			row.className = klass;
+			row.className = cls;
 			return row;
 		}
 
-		// remove all children of a node
-		function removeAllChild(node) {
-			if (node == undefined || node == null)
-				return;
-
-			while (node.firstChild)
-				node.removeChild(node.firstChild);
-		}
-
 		// switch time format
-		function switchFormat(offset) {
+		function switchFormat() {
 			const formats = ['24-hour', '12-hour'];
-			timeFormat = (timeFormat + offset) % 2;
+			timeFormat = (timeFormat + 1) % 2;
 			$('time-format').innerHTML = formats[timeFormat];
 			update();
 		}
@@ -132,13 +119,6 @@
 		// update table
 		function update() {
 			displayMonth(0);
-		}
-
-		// return month full name
-		function monthFullName(month) {
-			const monthNames = new Array('January', 'February', 'March', 'April', 'May', 'June',
-				'July', 'August', 'September', 'October', 'November', 'December');
-			return monthNames[month];
 		}
 
 		function $(id) {

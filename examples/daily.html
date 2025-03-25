@@ -3,6 +3,7 @@
 
 <head>
 	<title>Daily Prayer Times</title>
+	<meta name="author" content="Hamid Zarrabi-Zadeh">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="style.css">
 	<script src="../src/praytime.js"></script>
@@ -13,19 +14,16 @@
 	<div id="timetable"></div>
 
 	<script>
+		// get prayer times
 		const times = praytime.location([43, -80]).utcOffset(-5).times();
-		const labels = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha', 'Midnight'];
 
 		document.getElementById('timetable').innerHTML = `
-        <table class="daily">
-            <tr><th colspan="2">${(new Date()).toLocaleDateString()}</th></tr>
-            ${labels.map(prayer => `
-                <tr>
-                    <td>${prayer}</td>
-                    <td>${times[prayer.toLowerCase()]}</td>
-                </tr>
-            `).join('')}
-        </table>`;
+			<table class="daily">
+				<tr><th colspan="2">${(new Date()).toLocaleDateString()}</th></tr>
+				${['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha', 'Midnight'].map(label => `
+					<tr><td>${label}</td><td>${times[label.toLowerCase()]}</td></tr>
+				`).join('')}
+			</table>`;
 	</script>
 </body>
 

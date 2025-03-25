@@ -25,7 +25,7 @@ pre {
 .daily {
     border: 1px outset gray;
     border-collapse: collapse;
-    min-width: 12em;
+    min-width: 10em;
     margin: 0 auto;
 }
 
@@ -50,7 +50,8 @@ pre {
 
 /* Monthly */
 
-input {
+input,
+select {
     font-size: 12px;
 }
 
@@ -61,6 +62,10 @@ input {
 }
 
 .caption {
+    margin: 1em auto;
+}
+
+.caption #table-title {
     font-size: 20px;
     color: #d95722;
     text-align: center;
@@ -74,16 +79,6 @@ input {
 }
 
 .arrow:hover {
-    text-decoration: underline;
-}
-
-.command {
-    font-weight: bold;
-    text-decoration: none;
-    color: #aaa;
-}
-
-.command:hover {
     text-decoration: underline;
 }
 
@@ -112,4 +107,14 @@ input {
 .footer {
     text-align: center;
     margin: .7em 0 2em;
+}
+
+.footer a {
+    font-weight: bold;
+    text-decoration: none;
+    color: #aaa;
+}
+
+.footer a:hover {
+    text-decoration: underline;
 }

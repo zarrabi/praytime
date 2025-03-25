@@ -3,6 +3,7 @@
 
 <head>
 	<title>Yearly Prayer Timetable</title>
+	<meta name="author" content="Hamid Zarrabi-Zadeh">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="style.css">
 	<script src="../src/praytime.js"></script>
@@ -16,9 +17,9 @@
 			Year: <input type="text" value="2011" id="year" size="4" onchange="update();">&nbsp;
 			Time Zone: <input type="text" value="-5" id="timezone" size="2" onchange="update();">&nbsp;
 			Method:
-			<select id="method" size="1" style="font-size: 12px;" onchange="update()">
-				<option value="MWL">Muslim World League (MWL)</option>
-				<option value="ISNA" selected="selected">Islamic Society of North America (ISNA)</option>
+			<select id="method" onchange="update()">
+				<option value="MWL" selected="selected">Muslim World League (MWL)</option>
+				<option value="ISNA">Islamic Society of North America (ISNA)</option>
 				<option value="Egypt">Egyptian General Authority of Survey</option>
 				<option value="Makkah">Umm al-Qura University, Makkah</option>
 				<option value="Karachi">University of Islamic Sciences, Karachi</option>
@@ -27,9 +28,9 @@
 			</select>
 		</form>
 	</div>
-	<br />
 
 	<pre>
+
 Date   Fajr   Sunrise  Dhuhr    Asr   Maghrib  Isha
 -----------------------------------------------------
 </pre>
@@ -37,7 +38,7 @@ Date   Fajr   Sunrise  Dhuhr    Asr   Maghrib  Isha
 	<div id="timetable"></div>
 
 	<div class="footer">
-		Powered by: <a class="command" href="https://praytime.info">PrayTime.info</a>
+		Powered by: <a href="https://praytime.info">PrayTime.info</a>
 	</div>
 
 	<script type="text/javascript">
@@ -51,7 +52,10 @@ Date   Fajr   Sunrise  Dhuhr    Asr   Maghrib  Isha
 			const timezone = $('timezone').value;
 			const method = $('method').value;
 			const year = $('year').value;
+
+			// set prayer times parameters
 			praytime.method(method).location([lat, lng]).utcOffset(timezone);
+
 			$('timetable').innerHTML = '<pre>' + makeTable(year) + '</pre>';
 		}
 
@@ -59,15 +63,12 @@ Date   Fajr   Sunrise  Dhuhr    Asr   Maghrib  Isha
 			const date = new Date(+year, 0, 1);
 			const endDate = new Date(+year + 1, 0, 1);
 			const labels = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-			const monthNames = new Array('Jan', 'Feb', 'Mar', 'Apr', 'May',
-				'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
 
 			let table = '';
 			while (date < endDate) {
-				const times = praytime.times();
-				const day = String(date.getDate()).padStart(2, '0');
-				table += `${monthNames[date.getMonth()]} ${day}\t`;
-				table += labels.map(label => times[label.toLowerCase()]).join('\t') + '\n';
+				const times = praytime.times(); // get prayer times
+				const day = date.toLocaleString('en-US', { month: 'short', day: '2-digit' });
+				table += day + '\t' + labels.map(label => times[label.toLowerCase()]).join('\t') + '\n';
 				date.setDate(date.getDate() + 1); // next day
 			}
 			return table;
