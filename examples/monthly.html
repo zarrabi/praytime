@@ -6,19 +6,21 @@
 	<meta name="author" content="Hamid Zarrabi-Zadeh">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="style.css">
+
 	<script src="../src/praytime.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/luxon@3.6.0/build/global/luxon.min.js"></script>
 </head>
 
 <body>
 	<div class="header">
 		<form class="form" action="javascript:update();">
-			Latitude: <input type="text" value="43" id="latitude" size="4" onchange="update();" />&nbsp;
-			Longitude: <input type="text" value="-80" id="longitude" size="4" onchange="update();" />&nbsp;
-			Time Zone: <input type="text" value="-5" id="timezone" size="4" onchange="update();" />&nbsp;
+			Latitude: <input type="text" value="43.5" id="latitude" size="4" onchange="update();">&nbsp;
+			Longitude: <input type="text" value="-80.5" id="longitude" size="4" onchange="update();">&nbsp;
+			Time Zone: <select id="timezone" onchange="update();" style="width: 140px;"></select>&nbsp;
 			Method:
 			<select id="method" onchange="update()">
-				<option value="MWL" selected="selected">Muslim World League (MWL)</option>
-				<option value="ISNA">Islamic Society of North America (ISNA)</option>
+				<option value="MWL">Muslim World League (MWL)</option>
+				<option value="ISNA" selected="selected">Islamic Society of North America (ISNA)</option>
 				<option value="Egypt">Egyptian General Authority of Survey</option>
 				<option value="Makkah">Umm al-Qura University, Makkah</option>
 				<option value="Karachi">University of Islamic Sciences, Karachi</option>
@@ -47,31 +49,33 @@
 
 	<script type="text/javascript">
 
+		const praytime = new PrayTime();
+		const DateTime = luxon.DateTime;
 		const currentDate = new Date();
 		let timeFormat = 0;
+
+		initTimeZoneList();
 		switchFormat();
 
-		// display monthly timetable
 		function displayMonth(offset) {
 			const lat = $('latitude').value;
 			const lng = $('longitude').value;
 			const timezone = $('timezone').value;
 			const method = $('method').value;
-			const format = timeFormat ? '12H' : '24h';
+			const format = timeFormat ? '12h' : '24h';
 
 			// set prayer times parameters
-			praytime.method(method).location([lat, lng]).utcOffset(timezone).format(format);
+			praytime.method(method).location([lat, lng]).format(format);
 
 			currentDate.setMonth(currentDate.getMonth() + 1 * offset);
 			const month = currentDate.getMonth();
 			const year = currentDate.getFullYear();
 			const monthName = currentDate.toLocaleString('en-US', { month: 'long' });
 			$('table-title').innerHTML = monthName + ' ' + year;
-			makeTable(year, month);
+			makeTable(year, month, timezone);
 		}
 
-		// make monthly timetable
-		function makeTable(year, month) {
+		function makeTable(year, month, timezone) {
 			const items = {
 				day: 'Day', fajr: 'Fajr', sunrise: 'Sunrise',
 				dhuhr: 'Dhuhr', asr: 'Asr', maghrib: 'Maghrib', isha: 'Isha'
@@ -84,18 +88,18 @@
 			const endDate = new Date(year, month + 1, 1);
 
 			while (date < endDate) {
+				praytime.utcOffset(getOffset(timezone, date));
 				const times = praytime.times(date); // get prayer times
 				times.day = date.getDate();
 				const isToday = date.toDateString() === new Date().toDateString();
 				const cls = isToday ? 'today-row' : '';
 				tbody.appendChild(makeTableRow(times, items, cls));
-				date.setDate(date.getDate() + 1);  // next day
+				date.setDate(date.getDate() + 1); // next day
 			}
 			$('timetable').replaceChildren();
 			$('timetable').appendChild(tbody);
 		}
 
-		// make a table row
 		function makeTableRow(data, items, cls) {
 			const row = document.createElement('tr');
 			for (let i in items) {
@@ -108,7 +112,6 @@
 			return row;
 		}
 
-		// switch time format
 		function switchFormat() {
 			const formats = ['24-hour', '12-hour'];
 			timeFormat = (timeFormat + 1) % 2;
@@ -116,7 +119,23 @@
 			update();
 		}
 
-		// update table
+		function initTimeZoneList() {
+			const defaultZone = 'America/Toronto';
+			const timezones = Intl.supportedValuesOf("timeZone") || [defaultZone];
+			const selectElement = $('timezone');
+			timezones.forEach((timezone) => {
+				const option = document.createElement('option');
+				option.value = timezone;
+				option.textContent = timezone;
+				if (timezone === defaultZone) { option.selected = true; }
+				selectElement.appendChild(option);
+			});
+		}
+
+		function getOffset(timezone, date) {
+			return DateTime.fromJSDate(date).setZone(timezone).offset;
+		}
+
 		function update() {
 			displayMonth(0);
 		}

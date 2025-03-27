@@ -6,20 +6,22 @@
 	<meta name="author" content="Hamid Zarrabi-Zadeh">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="style.css">
+
 	<script src="../src/praytime.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/luxon@3.6.0/build/global/luxon.min.js"></script>
 </head>
 
 <body>
 	<div class="header">
 		<form class="form" action="javascript:update();">
-			Latitude: <input type="text" value="43" id="latitude" size="2" onchange="update();">&nbsp;
-			Longitude: <input type="text" value="-80" id="longitude" size="2" onchange="update();">&nbsp;
+			Latitude: <input type="text" value="43.5" id="latitude" size="4" onchange="update();">&nbsp;
+			Longitude: <input type="text" value="-80.5" id="longitude" size="4" onchange="update();">&nbsp;
 			Year: <input type="text" value="2011" id="year" size="4" onchange="update();">&nbsp;
-			Time Zone: <input type="text" value="-5" id="timezone" size="2" onchange="update();">&nbsp;
+			Time Zone: <select id="timezone" onchange="update();" style="width: 140px;"></select>&nbsp;
 			Method:
 			<select id="method" onchange="update()">
-				<option value="MWL" selected="selected">Muslim World League (MWL)</option>
-				<option value="ISNA">Islamic Society of North America (ISNA)</option>
+				<option value="MWL">Muslim World League (MWL)</option>
+				<option value="ISNA" selected="selected">Islamic Society of North America (ISNA)</option>
 				<option value="Egypt">Egyptian General Authority of Survey</option>
 				<option value="Makkah">Umm al-Qura University, Makkah</option>
 				<option value="Karachi">University of Islamic Sciences, Karachi</option>
@@ -43,7 +45,11 @@ Date   Fajr   Sunrise  Dhuhr    Asr   Maghrib  Isha
 
 	<script type="text/javascript">
 
+		const praytime = new PrayTime();
+		const DateTime = luxon.DateTime;
 		$('year').value = (new Date()).getFullYear();
+
+		initTimeZoneList();
 		update();
 
 		function update() {
@@ -54,24 +60,42 @@ Date   Fajr   Sunrise  Dhuhr    Asr   Maghrib  Isha
 			const year = $('year').value;
 
 			// set prayer times parameters
-			praytime.method(method).location([lat, lng]).utcOffset(timezone);
+			praytime.method(method).location([lat, lng]);
 
-			$('timetable').innerHTML = '<pre>' + makeTable(year) + '</pre>';
+			$('timetable').innerHTML = '<pre>' + makeTable(year, timezone) + '</pre>';
 		}
 
-		function makeTable(year) {
+		function makeTable(year, timezone) {
 			const date = new Date(+year, 0, 1);
 			const endDate = new Date(+year + 1, 0, 1);
 			const labels = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
 			let table = '';
 			while (date < endDate) {
-				const times = praytime.times(); // get prayer times
+				praytime.utcOffset(getOffset(timezone, date));
+				const times = praytime.times(date); // get prayer times
 				const day = date.toLocaleString('en-US', { month: 'short', day: '2-digit' });
 				table += day + '\t' + labels.map(label => times[label.toLowerCase()]).join('\t') + '\n';
 				date.setDate(date.getDate() + 1); // next day
 			}
 			return table;
+		}
+
+		function initTimeZoneList() {
+			const defaultZone = 'America/Toronto';
+			const timezones = Intl.supportedValuesOf("timeZone") || [defaultZone];
+			const selectElement = $('timezone');
+			timezones.forEach((timezone) => {
+				const option = document.createElement('option');
+				option.value = timezone;
+				option.textContent = timezone;
+				if (timezone === defaultZone) { option.selected = true; }
+				selectElement.appendChild(option);
+			});
+		}
+
+		function getOffset(timezone, date) {
+			return DateTime.fromJSDate(date).setZone(timezone).offset;
 		}
 
 		function $(id) {

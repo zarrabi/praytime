@@ -1,17 +1,17 @@
 
-// praytime.js: Prayer Times Calculator (v3.0.1)
+// praytime.js - Prayer Times Calculator (v3.1)
 // Copyright (c) 2007-2025 Hamid Zarrabi-Zadeh
 // License: MIT
-// https://praytime.info/docs
+// https://praytime.info
 
 
 //------------------------- User Interface ------------------------
 /*
     method(method)          // set calculation method
-    adjust(parameters)      // adjust calculation parameters
-    tune(mins)              // tune times by given minutes
     location(coordinates)   // set location
     utcOffset(number)       // set UTC offset in minutes or hours
+    adjust(parameters)      // adjust calculation parameters
+    tune(mins)              // tune times by given minutes
     format(format)          // options: 24h, 12h, 12H, x, X
     round(method)           // options: nearest, up, down, none
     times(date)             // options: date, array, timestamp
@@ -19,7 +19,7 @@
 
 //------------------------- Sample Usage --------------------------
 
-    const praytime = require('praytime');
+    const praytime = new PrayTime('ISNA');
     praytime.location([43, -80]).utcOffset(-5);
     console.log(praytime.times());
 
@@ -79,14 +79,14 @@ class PrayTime {
         return this.set({ location });
     }
 
-    // set time tune minutes
-    tune(minutes) {
-        return this.set({ tune: minutes });
+    // set tuning minutes
+    tune(tune) {
+        return this.set({ tune });
     }
 
     // set rounding method
-    round(rounding) {
-        return this.set({ rounding: rounding || 'nearest' });
+    round(rounding = 'nearest') {
+        return this.set({ rounding });
     }
 
     // set time format
@@ -101,10 +101,8 @@ class PrayTime {
     }
 
     // set utc offset
-    utcOffset(utcOffset) {
-        if (typeof utcOffset === 'undefined')
-            utcOffset = 'auto';
-        else if (Math.abs(utcOffset) < 16)
+    utcOffset(utcOffset = 'auto') {
+        if (typeof utcOffset === 'number' && Math.abs(utcOffset) < 16)
             utcOffset *= 60;
         return this.set({ utcOffset });
     }
@@ -113,18 +111,14 @@ class PrayTime {
     //---------------------- Getters ------------------------
 
     // get prayer times
-    times(date) {
-        date = date || 0;
-        if (typeof date == 'number') {
-            const dayOffset = (date < 1000) ? date : 0;
-            const timestamp = (date < 1000) ? Date.now() : date;
-            date = new Date(timestamp + dayOffset * 864e5);
-        }
+    times(date = 0) {
+        if (typeof date === 'number')
+            date = new Date((date < 1000) ? Date.now() + date * 864e5 : date);
         if (date.constructor === Date)
             date = [date.getFullYear(), date.getMonth() + 1, date.getDate()];
         this.utcTime = Date.UTC(date[0], date[1] - 1, date[2]);
 
-        const times = this.computeTimes();
+        let times = this.computeTimes();
         this.formatTimes(times);
         return times;
     }
@@ -133,9 +127,9 @@ class PrayTime {
     //---------------------- Deprecated -------------------------
 
     // deprecated: get prayer times
-    getTimes(date, location, timezone, dst, format) {
-        const utcOffset = isNaN(+timezone) ? 'auto' : timezone + (dst || 0);
-        this.location(location).utcOffset(utcOffset).format(format || '24h');
+    getTimes(date, location, timezone = 'auto', dst = 0, format = '24h') {
+        const utcOffset = (timezone == 'auto') ? timezone : timezone + dst;
+        this.location(location).utcOffset(utcOffset).format(format);
         return this.times(date);
     }
 
@@ -176,13 +170,13 @@ class PrayTime {
         const horizon = 0.833;
 
         return {
-            dhuhr: this.midDay(times.dhuhr),
             fajr: this.angleTime(params.fajr, times.fajr, -1),
             sunrise: this.angleTime(horizon, times.sunrise, -1),
+            dhuhr: this.midDay(times.dhuhr),
+            asr: this.angleTime(this.asrAngle(params.asr, times.asr), times.asr),
             sunset: this.angleTime(horizon, times.sunset),
             maghrib: this.angleTime(params.maghrib, times.maghrib),
             isha: this.angleTime(params.isha, times.isha),
-            asr: this.angleTime(this.asrAngle(params.asr, times.asr), times.asr),
             midnight: this.midDay(times.midnight) + 12
         }
     }
@@ -241,14 +235,14 @@ class PrayTime {
         const lng = this.settings.location[1];
         const D = this.utcTime / 864e5 - 10957.5 + this.value(time) / 24 - lng / 360;
 
-        const g = DT.mod(357.529 + 0.98560028 * D, 360);
-        const q = DT.mod(280.459 + 0.98564736 * D, 360);
-        const L = DT.mod(q + 1.915 * DT.sin(g) + 0.020 * DT.sin(2 * g), 360);
+        const g = this.mod(357.529 + 0.98560028 * D, 360);
+        const q = this.mod(280.459 + 0.98564736 * D, 360);
+        const L = this.mod(q + 1.915 * this.sin(g) + 0.020 * this.sin(2 * g), 360);
         const e = 23.439 - 0.00000036 * D;
-        const RA = DT.mod(DT.arctan2(DT.cos(e) * DT.sin(L), DT.cos(L)) / 15, 24);
+        const RA = this.mod(this.arctan2(this.cos(e) * this.sin(L), this.cos(L)) / 15, 24);
 
         return {
-            declination: DT.arcsin(DT.sin(e) * DT.sin(L)),
+            declination: this.arcsin(this.sin(e) * this.sin(L)),
             equation: q / 15 - RA,
         }
     }
@@ -256,17 +250,16 @@ class PrayTime {
     // compute mid-day
     midDay(time) {
         const eqt = this.sunPosition(time).equation;
-        const noon = DT.mod(12 - eqt, 24);
+        const noon = this.mod(12 - eqt, 24);
         return noon;
     }
 
     // compute the time when sun reaches a specific angle below horizon
-    angleTime(angle, time, direction) {
-        direction = direction || 1;
+    angleTime(angle, time, direction = 1) {
         const lat = this.settings.location[0];
         const decl = this.sunPosition(time).declination;
-        const numerator = -DT.sin(angle) - DT.sin(lat) * DT.sin(decl)
-        const diff = DT.arccos(numerator / (DT.cos(lat) * DT.cos(decl))) / 15;
+        const numerator = -this.sin(angle) - this.sin(lat) * this.sin(decl);
+        const diff = this.arccos(numerator / (this.cos(lat) * this.cos(decl))) / 15;
         return this.midDay(time) + diff * direction;
     }
 
@@ -275,7 +268,7 @@ class PrayTime {
         const shadowFactor = { Standard: 1, Hanafi: 2 }[asrParam] || this.value(asrParam);
         const lat = this.settings.location[0];
         const decl = this.sunPosition(time).declination;
-        return -1 * DT.arccot(shadowFactor + DT.tan(Math.abs(lat - decl)));
+        return -this.arccot(shadowFactor + this.tan(Math.abs(lat - decl)));
     }
 
 
@@ -298,8 +291,7 @@ class PrayTime {
     }
 
     // adjust time in higher latitudes
-    adjustTime(time, base, angle, night, direction) {
-        direction = direction || 1;
+    adjustTime(time, base, angle, night, direction = 1) {
         const factors = {
             NightMiddle: 1 / 2,
             OneSeventh: 1 / 7,
@@ -329,7 +321,7 @@ class PrayTime {
         const InvalidTime = '-----';
         if (isNaN(timestamp))
             return InvalidTime;
-        if (typeof format == 'function')
+        if (typeof format === 'function')
             return format(timestamp);
         if (format.toLowerCase() == 'x')
             return Math.floor(timestamp / ((format == 'X') ? 1000 : 1));
@@ -342,64 +334,57 @@ class PrayTime {
         const utcOffset = this.settings.utcOffset;
         const minsDiff = (utcOffset == 'auto') ? -date.getTimezoneOffset() : utcOffset;
         const mins = date.getUTCHours() * 60 + date.getUTCMinutes() + minsDiff;
-        const hours = DT.mod(Math.floor(mins / 60), 24);
-        const hour = format.toLowerCase() == '12h' ? DT.mod(hours - 1, 12) + 1 : this.twoDigits(hours);
-        const minutes = this.twoDigits(DT.mod(mins, 60));
-        const suffix = (format == '12h') ? ['AM', 'PM'][hours < 12 ? 0 : 1] : '';
+        const hours = this.mod(Math.floor(mins / 60), 24);
+        const hour = format.toLowerCase() == '12h' ? this.mod(hours - 1, 12) + 1 : this.twoDigits(hours);
+        const minutes = this.twoDigits(Math.trunc(this.mod(mins, 60)));
+        const suffix = (format == '12H') ? ['AM', 'PM'][hours < 12 ? 0 : 1] : '';
         return hour + ':' + minutes + (suffix ? ' ' + suffix : '');
     }
+
+
+    //---------------------- Misc Functions -----------------------
 
     // add padding zero
     twoDigits(num) {
         return String(num).padStart(2, '0');
     }
 
-
-    //---------------------- Misc Functions -----------------------
-
     // convert string to number
     value(str) {
-        return 1 * (str + '').split(/[^0-9.+-]/)[0];
+        return +String(str).split(/[^0-9.+-]/)[0];
     }
 
     // detect if input contains 'min'
     isMin(str) {
-        return (str + '').indexOf('min') != -1;
+        return String(str).indexOf('min') != -1;
     }
 
+    // positive modulo
+    mod(a, b) {
+        return ((a % b) + b) % b;
+    }
+
+
+    //--------------------- Degree-Based Trigonometry -----------------
+
+    dtr = (d) => d * Math.PI / 180;
+    rtd = (r) => r * 180 / Math.PI;
+
+    sin = (d) => Math.sin(this.dtr(d));
+    cos = (d) => Math.cos(this.dtr(d));
+    tan = (d) => Math.tan(this.dtr(d));
+
+    arcsin = (d) => this.rtd(Math.asin(d));
+    arccos = (d) => this.rtd(Math.acos(d));
+    arctan = (d) => this.rtd(Math.atan(d));
+
+    arccot = (x) => this.rtd(Math.atan(1 / x));
+    arctan2 = (y, x) => this.rtd(Math.atan2(y, x));
 }
-
-
-//-------------------- Degree-Based Trigonometry ------------------
-
-class DT {
-
-    static dtr(d) { return (d * Math.PI) / 180.0; }
-    static rtd(r) { return (r * 180.0) / Math.PI; }
-
-    static sin(d) { return Math.sin(this.dtr(d)); }
-    static cos(d) { return Math.cos(this.dtr(d)); }
-    static tan(d) { return Math.tan(this.dtr(d)); }
-
-    static arcsin(d) { return this.rtd(Math.asin(d)); }
-    static arccos(d) { return this.rtd(Math.acos(d)); }
-    static arctan(d) { return this.rtd(Math.atan(d)); }
-
-    static arccot(x) { return this.rtd(Math.atan(1 / x)); }
-    static arctan2(y, x) { return this.rtd(Math.atan2(y, x)); }
-
-    static mod(a, b) { return ((a % b) + b) % b; }
-}
-
-
-//------------------------- Default Instance ----------------------
-
-const praytime = new PrayTime();
 
 
 //------------------------- Node.js Export ------------------------
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = praytime;
-    module.exports.PrayTime = PrayTime;
+    module.exports = { PrayTime };
 } 

@@ -10,16 +10,27 @@
 </head>
 
 <body>
-	<p class="title">Waterloo, ON, Canada</p>
-	<div id="timetable"></div>
+	<h3>Waterloo, ON, Canada</h3>
+	<div></div>
 
 	<script>
-		// get prayer times
-		const times = praytime.location([43, -80]).utcOffset(-5).times();
+		const praytime = new PrayTime('ISNA');
 
-		document.getElementById('timetable').innerHTML = `
+		// Set Waterloo coordinates
+		const coords = [43.5, -80.5];
+
+		// get UTC offset from system
+		const timeZone = 'America/Toronto',
+			today = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "short" }).format(new Date()),
+			offset = today.endsWith('EDT') ? -4 : -5;
+
+		// get prayer times
+		const times = praytime.location(coords).utcOffset(offset).times();
+
+		// display prayer times
+		document.getElementsByTagName('div')[0].innerHTML = `
 			<table class="daily">
-				<tr><th colspan="2">${(new Date()).toLocaleDateString()}</th></tr>
+				<tr><th colspan="2">${today}</th></tr>
 				${['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha', 'Midnight'].map(label => `
 					<tr><td>${label}</td><td>${times[label.toLowerCase()]}</td></tr>
 				`).join('')}
