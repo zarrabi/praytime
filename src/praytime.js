@@ -41,6 +41,7 @@ class PrayTime {
             Jafari: { fajr: 16, maghrib: 4, midnight: 'Jafari' },
             France: { fajr: 12, isha: 12 },
             Russia: { fajr: 16, isha: 15 },
+            Malaysia: { fajr: 20, isha: 18 }, // JAKIM
             Singapore: { fajr: 20, isha: 18 },
             defaults: { isha: 14, maghrib: '1 min', midnight: 'Standard' }
         };
