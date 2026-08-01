@@ -43,6 +43,7 @@ class PrayTime {
             Russia: { fajr: 16, isha: 15 },
             Malaysia: { fajr: 20, isha: 18 }, // JAKIM
             Singapore: { fajr: 20, isha: 18 },
+            Jordan: { fajr: 18, maghrib: 5, isha: 18 },
             defaults: { isha: 14, maghrib: '1 min', midnight: 'Standard' }
         };
 
