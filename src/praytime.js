@@ -56,7 +56,7 @@ class PrayTime {
             utcOffset: 'auto',
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             location: [0, -(new Date()).getTimezoneOffset() / 4],
-            iterations: 1
+            iterations: 2
         };
 
         this.labels = [
