@@ -72,3 +72,14 @@ test('Test tuning method', () => {
     expect(times.maghrib).toBe('18:07');
 });
 
+
+test('Test convergence at high latitudes', () => {
+    // Reykjavik, Apr 9 and Aug 30, 2026: Fajr and Isha near the end of twilight, where one pass is minutes off.
+    // Reference instants from a full-precision ephemeris (astronomy-engine, VSOP87); Reykjavik is UTC+0.
+    const pt = new PrayTime('MWL').location([64.1466, -21.9426]).timezone('Atlantic/Reykjavik')
+        .adjust({ highLats: 'None' }).format('x');
+    const near = (t, ref) => expect(Math.abs(t - ref)).toBeLessThan(60e3);
+    near(pt.getTimes([2026, 4, 9]).fajr, Date.UTC(2026, 3, 9, 2, 5, 37));
+    near(pt.getTimes([2026, 4, 9]).isha, Date.UTC(2026, 3, 10, 0, 26, 1));
+    near(pt.getTimes([2026, 8, 30]).isha, Date.UTC(2026, 7, 31, 1, 2, 29));
+});
